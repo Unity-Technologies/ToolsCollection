@@ -5,10 +5,17 @@ using UnityEngine.Events;
 
 public class ReferenceHolder : MonoBehaviour
 {
-    public UnityEvent testEvent;
+    [System.Serializable]
+    public class InternalClassTest
+    {
+        public UnityEvent internalEventTest;
+    }
 
-	// Use this for initialization
-	void Start () {
+    public UnityEvent testEvent;
+    public InternalClassTest nestedClass;
+
+    // Use this for initialization
+    void Start () {
 		
 	}
 	

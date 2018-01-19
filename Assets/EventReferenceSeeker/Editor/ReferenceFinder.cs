@@ -5,13 +5,16 @@ using UnityEditor;
 using System.Reflection;
 using System.Linq;
 using System.IO;
-
+using YamlDotNet;
+using YamlDotNet.RepresentationModel;
 
 public class ReferenceFinder : EditorWindow
 {
     string searchedFunction;
     string searchResult = "";
     string valueToSearch = "";
+
+    System.Type typeSearched;
 
     string tempSearchResult = "";
 
@@ -37,7 +40,9 @@ public class ReferenceFinder : EditorWindow
             int purcentage = Mathf.FloorToInt(currentParseFile / (float)filesList.Count * 100.0f);
             searchResult = "Searching " + purcentage + "%";
 
-            HandleFile(filesList[currentParseFile]);
+            //HandleFile(filesList[currentParseFile]);
+            NewHandleFile(filesList[currentParseFile]);
+
             currentParseFile += 1;
 
             if (currentParseFile == filesList.Count)
@@ -117,7 +122,8 @@ public class ReferenceFinder : EditorWindow
             valueToSearch = func[0].Name;
         }
 
-        valueToSearch = "m_MethodName: " + valueToSearch;
+        typeSearched = type;
+        //valueToSearch = valueToSearch;
 
         //Now that we checked the function name exist and is valid, we list all object that is suceptible of having an unity event data to it, meaning Scene & prefab.
         filesList = new List<string>();
@@ -127,9 +133,176 @@ public class ReferenceFinder : EditorWindow
         currentParseFile = 0;
     }
 
+    public class YamlVisitorEvent : IYamlVisitor
+    {
+        public ReferenceFinder referenceFinder;
+        public bool havePersistentCall = false;
+        public HashSet<string> idToCheck = new HashSet<string>();
+
+        public void Visit(YamlStream stream)
+        {
+            
+        }
+
+        public void Visit(YamlDocument document)
+        {
+            
+        }
+
+        public void Visit(YamlScalarNode scalar)
+        {
+            
+        }
+
+        public void Visit(YamlSequenceNode sequence)
+        {
+
+        }
+
+        public void Visit(YamlMappingNode mapping)
+        {
+            foreach(var n in mapping)
+            {
+                n.Value.Accept(this);
+                if(((YamlScalarNode)n.Key).Value == "m_PersistentCalls")
+                {
+                    var callsSequence = n.Value["m_Calls"] as YamlSequenceNode;
+
+                    foreach(var call  in callsSequence)
+                    {
+                        if(((YamlScalarNode)call["m_MethodName"]).Value == referenceFinder.valueToSearch)
+                        {
+                            havePersistentCall = true;
+                            idToCheck.Add(((YamlScalarNode)call["m_Target"]["fileID"]).Value);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void NewHandleFile(string file)
+    {
+        bool filenameWrote = false;
+
+        var fileContent = File.ReadAllText(file);
+        //unity seem to use non valid yaml by added a "stripped" keyword on object that are linked to a prefab. Since the pareser itch on those, we remove them
+        fileContent = fileContent.Replace("stripped", "");
+        var input = new StringReader(fileContent);
+
+        var yaml = new YamlStream();
+        yaml.Load(input);
+
+        YamlVisitorEvent visitor = new YamlVisitorEvent();
+        visitor.referenceFinder = this;
+
+        //map gameobject id to a hashset of monobehaviour to check for type against the searched type
+        Dictionary<string, HashSet<string>> gameobjectToIdToCheck = new Dictionary<string, HashSet<string>>();
+
+        //we store the anchor <-> node mapping, as there don't seem to be anyway to do that quickly through the YAml graph
+        Dictionary<string, YamlMappingNode> parsedNodes = new Dictionary<string, YamlMappingNode>();
+
+        foreach (var doc in yaml.Documents)
+        {
+            var root = (YamlMappingNode)doc.RootNode;
+
+            parsedNodes[root.Anchor] = root;
+
+            foreach (var node in root.Children)
+            {
+                var scalarNode = (YamlScalarNode) node.Key;
+                if (scalarNode.Value == "MonoBehaviour")
+                {//if it's a monobehaviour, it may have a list of event as child
+                    YamlMappingNode sequenceNode = node.Value as YamlMappingNode;
+
+                    visitor.havePersistentCall = false;
+                    visitor.idToCheck.Clear();
+                    sequenceNode.Accept(visitor);
+
+                    if(visitor.havePersistentCall)
+                    {//we found persistent call
+                        string gameobjectID = ((YamlScalarNode)node.Value["m_GameObject"]["fileID"]).Value;
+
+                        if (!gameobjectToIdToCheck.ContainsKey(gameobjectID))
+                            gameobjectToIdToCheck[gameobjectID] = new HashSet<string>();
+
+                        gameobjectToIdToCheck[gameobjectID].UnionWith(visitor.idToCheck);
+                    }
+                }
+            }
+        }
+
+        //now we go over all our gameobject to check, and if one of the monobehaviour they ahve been associated with are of the researched type, they are added to the result
+        foreach(var pair in gameobjectToIdToCheck)
+        {
+            bool haveOneValidCall = false;
+            if(!parsedNodes.ContainsKey(pair.Key))
+            {
+                Debug.LogError("Tried to check an object id that don't exist : " + pair.Key);
+                continue;
+            }
+
+            foreach(var id in pair.Value)
+            {
+                var targetNode = parsedNodes[id];
+                var guid = ((YamlScalarNode)targetNode["MonoBehaviour"]["m_Script"]["guid"]).Value;
+
+                MonoScript script =  AssetDatabase.LoadAssetAtPath<MonoScript>(AssetDatabase.GUIDToAssetPath(guid));
+
+                if(script.GetClass() == typeSearched)
+                {
+                    haveOneValidCall = true;
+                }
+            }
+
+            if(haveOneValidCall)
+            {
+                if (!filenameWrote)
+                {
+                    filenameWrote = true;
+                    tempSearchResult += Path.GetFileName(file) + "\n";
+                }
+
+                if (((YamlScalarNode)parsedNodes[pair.Key]["GameObject"]["m_PrefabParentObject"]["fileID"]).Value != "0")
+                {//this is a prefab instance, need to find the prefab value linked to it!!
+                    tempSearchResult += "\t" + "A Prefab";
+                }
+                else
+                {
+                    string fullPath = "";
+
+                    //make an assumption here that the 1st component of every gameobject will always be its transform.
+                    string currentGOId = pair.Key;
+                    while(currentGOId != "0")
+                    {
+                        fullPath = parsedNodes[currentGOId]["GameObject"]["m_Name"] + (fullPath == "" ? "" : "/" + fullPath);
+
+                        string transformID = parsedNodes[currentGOId]["GameObject"]["m_Component"][0]["component"]["fileID"].ToString();
+
+                        Debug.Log("trasnofrmID " + transformID);
+
+                        string parentTransformID = parsedNodes[transformID]["Transform"]["m_Father"]["fileID"].ToString();
+                        if(parentTransformID != "0")
+                        {
+                            currentGOId = parsedNodes[parentTransformID]["Transform"]["m_GameObject"]["fileID"].ToString();
+                        }
+
+                        Debug.Log("currentGOID " + currentGOId);
+                    }
+
+                    tempSearchResult += "\t" + fullPath + "\n";
+                }
+            }
+        }
+    }
+
     private void HandleFile(string file)
     {
         bool nameWritten = false;
+
+        string relativePath = file.Replace(Application.dataPath, "Assets");
+        Debug.Log(relativePath);
+        Debug.Log(AssetDatabase.AssetPathToGUID(relativePath));
 
         string content = File.ReadAllText(file);
 
@@ -173,6 +346,9 @@ public class ReferenceFinder : EditorWindow
             int parentGOIndex = content.LastIndexOf("&" + gameobjectID, startIndex);
             //if it wasn't found, search in the other direction (most of the time, it will be above, but in some case it can be inverted)
             if (parentGOIndex == -1) parentGOIndex = content.IndexOf("&" + gameobjectID, startIndex);
+
+            //we check if that object was "stripped". A stripped gameobject don't have any info, it is just a link to a prefab, so we have to go fetch the prefab data?
+
 
             //if that object have a parent, we go fetch the name of it recursivly too
             int fatherIDPlaceIndex = content.IndexOf(gameObjectParentString, parentGOIndex);

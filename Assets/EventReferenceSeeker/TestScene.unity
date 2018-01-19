@@ -13,7 +13,7 @@ OcclusionCullingSettings:
 --- !u!104 &2
 RenderSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 8
+  serializedVersion: 9
   m_Fog: 0
   m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   m_FogMode: 3
@@ -39,6 +39,7 @@ RenderSettings:
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
   m_IndirectSpecularColor: {r: 0.44657874, g: 0.49641258, b: 0.5748172, a: 1}
+  m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -54,11 +55,10 @@ LightmapSettings:
     m_EnableBakedLightmaps: 1
     m_EnableRealtimeLightmaps: 1
   m_LightmapEditorSettings:
-    serializedVersion: 9
+    serializedVersion: 10
     m_Resolution: 2
     m_BakeResolution: 40
-    m_TextureWidth: 1024
-    m_TextureHeight: 1024
+    m_AtlasSize: 1024
     m_AO: 0
     m_AOMaxDistance: 1
     m_CompAOExponent: 1
@@ -200,7 +200,7 @@ RectTransform:
   m_Children:
   - {fileID: 1139883606}
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -214,6 +214,11 @@ Prefab:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 114585998097588646, guid: 52ada1a644f5af545ac2db9ea630615f,
+        type: 2}
+      propertyPath: testEvent.m_PersistentCalls.m_Calls.Array.size
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 4613899140347562, guid: 52ada1a644f5af545ac2db9ea630615f, type: 2}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -261,6 +266,35 @@ Prefab:
       propertyPath: testEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 114585998097588646, guid: 52ada1a644f5af545ac2db9ea630615f,
+        type: 2}
+      propertyPath: testEvent.m_PersistentCalls.m_Calls.Array.data[1].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 114585998097588646, guid: 52ada1a644f5af545ac2db9ea630615f,
+        type: 2}
+      propertyPath: testEvent.m_PersistentCalls.m_Calls.Array.data[1].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 114585998097588646, guid: 52ada1a644f5af545ac2db9ea630615f,
+        type: 2}
+      propertyPath: testEvent.m_PersistentCalls.m_Calls.Array.data[1].m_Target
+      value: 
+      objectReference: {fileID: 196098862}
+    - target: {fileID: 114585998097588646, guid: 52ada1a644f5af545ac2db9ea630615f,
+        type: 2}
+      propertyPath: testEvent.m_PersistentCalls.m_Calls.Array.data[1].m_MethodName
+      value: TestFunction
+      objectReference: {fileID: 0}
+    - target: {fileID: 114585998097588646, guid: 52ada1a644f5af545ac2db9ea630615f,
+        type: 2}
+      propertyPath: testEvent.m_PersistentCalls.m_Calls.Array.data[1].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 1137414040139544, guid: 52ada1a644f5af545ac2db9ea630615f, type: 2}
+      propertyPath: m_Name
+      value: SelfReferencingRenamed
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 52ada1a644f5af545ac2db9ea630615f, type: 2}
   m_IsPrefabParent: 0
@@ -270,6 +304,38 @@ MonoBehaviour:
     type: 2}
   m_PrefabInternal: {fileID: 196098859}
   m_Script: {fileID: 11500000, guid: 69bfbb65fdb39f543834aa739238a030, type: 3}
+--- !u!1 &196098861 stripped
+GameObject:
+  m_PrefabParentObject: {fileID: 1444195426749268, guid: 52ada1a644f5af545ac2db9ea630615f,
+    type: 2}
+  m_PrefabInternal: {fileID: 196098859}
+--- !u!114 &196098862
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 196098861}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55bb9fb850a216545a5d092c82dc2969, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  testEvent:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 196098860}
+        m_MethodName: TestFunction
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine.CoreModule, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
 --- !u!1 &765536183
 GameObject:
   m_ObjectHideFlags: 0
@@ -300,9 +366,8 @@ MonoBehaviour:
   testEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 114585998097588646, guid: 52ada1a644f5af545ac2db9ea630615f,
-          type: 2}
-        m_MethodName: CancelInvoke
+      - m_Target: {fileID: 765536184}
+        m_MethodName: TestFunction
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -314,6 +379,23 @@ MonoBehaviour:
         m_CallState: 2
     m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine.CoreModule, Version=0.0.0.0,
       Culture=neutral, PublicKeyToken=null
+  nestedClass:
+    internalEventTest:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 765536184}
+          m_MethodName: TestFunction
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+      m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine.CoreModule, Version=0.0.0.0,
+        Culture=neutral, PublicKeyToken=null
 --- !u!4 &765536185
 Transform:
   m_ObjectHideFlags: 0
@@ -325,7 +407,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &799225995
 GameObject:
@@ -406,7 +488,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1139883605
 GameObject:
@@ -557,7 +639,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
 --- !u!108 &1781322356
 Light:
@@ -729,5 +811,5 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
