@@ -6,7 +6,7 @@ that we write for different projects.
 
 Each live in its own folder under the Assets folder.
 
-Through the **Package Manager** tool (see wiki for documentation) each tool can
+Through the **Package Designer** tool (see wiki for documentation) each tool can
 be easily export to a unity Package to be imported by itself inside a projects
 
 *Longer term goal is to have a build computer somewhere exporting those package
@@ -21,10 +21,11 @@ A tool to find all reference to a given function used in Unity Event inside the
 editor. Allow to check before removing a function that seemed used nowhere that
 it is not referenced by a Unity Event (and so would only fail during execution)
 
-### Package Manager
+### Package Designer
 
-The Package Manager is a tool that allow to define package from assets in the
-project and export them into a unitypackage through a single click.
+The Package Designer is a tool that allow to define package from assets, save
+that configuration as asset in the project and export them into a unitypackage
+through a single click.
 
 It also allow to reorganize said assets in a different hierarchy than the one
 they are in the project before export (e.g you may want to group mesh, material
