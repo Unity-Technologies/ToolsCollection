@@ -5,6 +5,7 @@ using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using Microsoft.CSharp;
 using System.CodeDom.Compiler;
+using System.Security.Policy;
 using System.Text;
 
 public class PackageDesigner : EditorWindow
@@ -26,6 +27,21 @@ public class PackageDesigner : EditorWindow
     string m_PackageCompileError;
     List<string> m_NonCompilingScriptFiles = new List<string>();
     Vector2 m_ErroDisplayScroll;
+
+    public class ExportTask
+    {
+        public string destination;
+        public AssetPackage package;
+        public bool copied = false;
+
+        public string[] oldPathSaved;
+        public string[] newPathSaved;
+
+        public string exportTemp;
+        public string movePath;
+    }
+
+    private Queue<ExportTask> m_ToExport = new Queue<ExportTask>();
 
     [MenuItem("Content Extensions/PackageDesigner")]
     static void Open()
@@ -66,6 +82,63 @@ public class PackageDesigner : EditorWindow
         EditorApplication.UnlockReloadAssemblies();
     }
 
+    private void Update()
+    {
+        if (m_ToExport.Count > 0)
+        {
+            ExportTask task = m_ToExport.Peek();
+            if (!task.copied)
+            {//no yet copied over to a temp folder for export
+                //First move all into a temp folder for export
+                task.oldPathSaved = new string[m_CurrentlyEdited.dependencies.Length];
+                task.newPathSaved = new string[m_CurrentlyEdited.dependencies.Length];
+                task.exportTemp = Application.dataPath + "/" + m_CurrentlyEdited.packageName + "_Export";
+                task.movePath = task.exportTemp.Replace(Application.dataPath, "Assets");
+                System.IO.Directory.CreateDirectory(task.exportTemp);
+
+                for (int i = 0; i < m_CurrentlyEdited.dependenciesID.Length; ++i)
+                {
+                    string destPath = m_CurrentlyEdited.outputPath[i].Replace("Assets", task.movePath);
+                    string directorypath = destPath.Replace("Assets", Application.dataPath);
+                    System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(directorypath));
+                }
+
+                AssetDatabase.Refresh();
+
+                for (int i = 0; i < m_CurrentlyEdited.dependenciesID.Length; ++i)
+                {
+                    string path = AssetDatabase.GUIDToAssetPath(m_CurrentlyEdited.dependenciesID[i]);
+                    task.oldPathSaved[i] = path;
+                    string destPath = m_CurrentlyEdited.outputPath[i].Replace("Assets", task.movePath);
+                    task.newPathSaved[i] = destPath;
+
+                    AssetDatabase.MoveAsset(path, destPath);
+                }
+
+                AssetDatabase.Refresh();
+
+                task.copied = true;
+            }
+            else
+            {//was copied now need to export then clean & remove from the queue
+
+                Debug.Log("Exporting and cleaning");
+                AssetDatabase.ExportPackage(task.movePath, task.destination, ExportPackageOptions.Recurse);
+
+                for (int i = 0; i < task.oldPathSaved.Length; ++i)
+                {
+                    AssetDatabase.MoveAsset(task.newPathSaved[i], task.oldPathSaved[i]);
+                }
+
+                FileUtil.DeleteFileOrDirectory(task.exportTemp);
+
+                AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+
+                m_ToExport.Dequeue();
+            }
+        }
+    }
+
     void UndoPerformed()
     {
         PopulateTreeview();
@@ -73,6 +146,15 @@ public class PackageDesigner : EditorWindow
 
     private void OnGUI()
     {
+        if (m_ToExport.Count > 0)
+        {
+            EditorUtility.DisplayProgressBar("Exporting package...", "Exporting package", 0.5f);
+        }
+        else
+        {
+            EditorUtility.ClearProgressBar();
+        }
+
         if (GUILayout.Button("Export All Package"))
         {
             ExportAll();
@@ -127,51 +209,13 @@ public class PackageDesigner : EditorWindow
         if (saveTo == "")
             return;
 
-        EditorApplication.LockReloadAssemblies();
-
-        //First move all into a temp folder for export
-        string[] oldPathSaved = new string[m_CurrentlyEdited.dependencies.Length];
-        string[] newPathSaved = new string[m_CurrentlyEdited.dependencies.Length];
-        string exportTemp = Application.dataPath + "/" + m_CurrentlyEdited.packageName + "_Export";
-        string movePath = exportTemp.Replace(Application.dataPath, "Assets");
-        System.IO.Directory.CreateDirectory(exportTemp);
-
-        for(int i = 0; i < m_CurrentlyEdited.dependenciesID.Length; ++i)
+        ExportTask task = new ExportTask
         {
-            string destPath = m_CurrentlyEdited.outputPath[i].Replace("Assets", movePath);
-            string directorypath = destPath.Replace("Assets", Application.dataPath);
-            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(directorypath));     
-        }
-        //AssetDatabase.Refresh();
+            destination = saveTo,
+            package = m_CurrentlyEdited
+        };
 
-        AssetDatabase.StartAssetEditing();
-        for (int i = 0; i < m_CurrentlyEdited.dependenciesID.Length; ++i)
-        {
-            string path = AssetDatabase.GUIDToAssetPath(m_CurrentlyEdited.dependenciesID[i]);
-            oldPathSaved[i] = path;
-            string destPath = m_CurrentlyEdited.outputPath[i].Replace("Assets", movePath);
-            newPathSaved[i] = destPath;
-
-            AssetDatabase.MoveAsset(path, destPath);
-        }
-        AssetDatabase.StopAssetEditing();
-        //AssetDatabase.Refresh();
-
-        AssetDatabase.ExportPackage(movePath, saveTo, ExportPackageOptions.Recurse);
-
-        AssetDatabase.StartAssetEditing();
-        for (int i = 0; i < oldPathSaved.Length; ++i)
-        {
-            AssetDatabase.MoveAsset(newPathSaved[i], oldPathSaved[i]);
-            AssetDatabase.ImportAsset(oldPathSaved[i], ImportAssetOptions.ForceUpdate);
-        }
-
-        FileUtil.DeleteFileOrDirectory(exportTemp);
-        AssetDatabase.StopAssetEditing();
-
-        AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-
-        EditorApplication.UnlockReloadAssemblies();
+        m_ToExport.Enqueue(task);
     }
 
     void ExportAll()
