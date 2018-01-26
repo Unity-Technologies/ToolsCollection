@@ -27,7 +27,7 @@ public class PackageDesigner : EditorWindow
     List<string> m_NonCompilingScriptFiles = new List<string>();
     Vector2 m_ErroDisplayScroll;
 
-    [MenuItem("Content/PackageDesigner")]
+    [MenuItem("Content Extensions/PackageDesigner")]
     static void Open()
     {
         GetWindow<PackageDesigner>();

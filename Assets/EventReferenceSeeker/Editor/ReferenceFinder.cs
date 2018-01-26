@@ -27,7 +27,7 @@ public class ReferenceFinder : EditorWindow
     const string gameObjectNameString = "m_Name: ";
     const string gameObjectParentString = "m_Father: {fileID: ";
 
-    [MenuItem("Extensions/Find Function References")]
+    [MenuItem("Content Extensions/Find Function References")]
     static public void OpenWindow()
     {
         GetWindow<ReferenceFinder>();
