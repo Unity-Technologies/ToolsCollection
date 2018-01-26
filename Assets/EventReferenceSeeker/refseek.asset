@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2bcdc6922393b0442846eb98977c87ae, type: 3}
+  m_Name: refseek
+  m_EditorClassIdentifier: 
+  packageName: ReferenceSeeker
+  dependenciesID:
+  - 5e661903909feea498f833199291d65b
+  - 1ee27f1f15c24f642a8c564ccfcc1ad9
+  outputPath:
+  - Assets/EventReferenceSeeker/Plugin/YamlDotNet.dll
+  - Assets/EventReferenceSeeker/Editor/ReferenceFinder.cs
