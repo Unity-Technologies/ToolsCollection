@@ -265,7 +265,10 @@ public class ReferenceFinder : EditorWindow
 
                 if (((YamlScalarNode)parsedNodes[pair.Key]["GameObject"]["m_PrefabParentObject"]["fileID"]).Value != "0")
                 {//this is a prefab instance, need to find the prefab value linked to it!!
-                    tempSearchResult += "\t" + "A Prefab";
+
+                    
+
+                    tempSearchResult += "\t" + "A Prefab \n";
                 }
                 else
                 {
@@ -279,13 +282,16 @@ public class ReferenceFinder : EditorWindow
 
                         string transformID = parsedNodes[currentGOId]["GameObject"]["m_Component"][0]["component"]["fileID"].ToString();
 
-                        Debug.Log("trasnofrmID " + transformID);
+                        Debug.Log("TransformID " + transformID);
 
-                        string parentTransformID = parsedNodes[transformID]["Transform"]["m_Father"]["fileID"].ToString();
-                        if(parentTransformID != "0")
+                        string parentTransformID = parsedNodes[transformID].Children.Values.ElementAt(0)["m_Father"]["fileID"].ToString();
+                        Debug.Log("Parent transform ID " + parentTransformID);
+                        if (parentTransformID != "0")
                         {
-                            currentGOId = parsedNodes[parentTransformID]["Transform"]["m_GameObject"]["fileID"].ToString();
+                            currentGOId = parsedNodes[parentTransformID].Children.Values.ElementAt(0)["m_GameObject"]["fileID"].ToString();
                         }
+                        else
+                            currentGOId = "0";
 
                         Debug.Log("currentGOID " + currentGOId);
                     }
