@@ -1,10 +1,10 @@
 before_script:
-  - rm -rf ~/toolscollection_builds
-  - mkdir ~/toolscollection_builds
+  - rm -rf  $(pwd)/toolscollection_builds
+  - mkdir  $(pwd)/toolscollection_builds
 
 allpackage:
   script:
-    - /Applications/Unity/Hub/Editor/2018.1.0b5/Unity.app/Contents/MacOS/Unity -projectPath $(pwd) -logFile ./log.txt -batchmode -executeMethod PackageDesigner.CommandLineExportAllPackage ~/toolscollection_builds
+    - /Applications/Unity/Hub/Editor/2018.1.0b5/Unity.app/Contents/MacOS/Unity -projectPath $(pwd) -logFile ./log.txt -batchmode -executeMethod PackageDesigner.CommandLineExportAllPackage  $(pwd)/toolscollection_builds
   only:
     - master
   tags:
