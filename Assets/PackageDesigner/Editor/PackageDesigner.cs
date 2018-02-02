@@ -28,6 +28,9 @@ public class PackageDesigner : EditorWindow
     List<string> m_NonCompilingScriptFiles = new List<string>();
     Vector2 m_ErroDisplayScroll;
 
+    //this will be set to true by the command line version so it close the editor once all command are done.
+    private bool m_CloseOnFinishExport = false;
+
     public class ExportTask
     {
         public string destination;
@@ -90,26 +93,26 @@ public class PackageDesigner : EditorWindow
             if (!task.copied)
             {//no yet copied over to a temp folder for export
                 //First move all into a temp folder for export
-                task.oldPathSaved = new string[m_CurrentlyEdited.dependencies.Length];
-                task.newPathSaved = new string[m_CurrentlyEdited.dependencies.Length];
-                task.exportTemp = Application.dataPath + "/" + m_CurrentlyEdited.packageName + "_Export";
+                task.oldPathSaved = new string[task.package.dependencies.Length];
+                task.newPathSaved = new string[task.package.dependencies.Length];
+                task.exportTemp = Application.dataPath + "/" + task.package.packageName + "_Export";
                 task.movePath = task.exportTemp.Replace(Application.dataPath, "Assets");
                 System.IO.Directory.CreateDirectory(task.exportTemp);
 
-                for (int i = 0; i < m_CurrentlyEdited.dependenciesID.Length; ++i)
+                for (int i = 0; i < task.package.dependenciesID.Length; ++i)
                 {
-                    string destPath = m_CurrentlyEdited.outputPath[i].Replace("Assets", task.movePath);
+                    string destPath = task.package.outputPath[i].Replace("Assets", task.movePath);
                     string directorypath = destPath.Replace("Assets", Application.dataPath);
                     System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(directorypath));
                 }
 
                 AssetDatabase.Refresh();
 
-                for (int i = 0; i < m_CurrentlyEdited.dependenciesID.Length; ++i)
+                for (int i = 0; i < task.package.dependenciesID.Length; ++i)
                 {
-                    string path = AssetDatabase.GUIDToAssetPath(m_CurrentlyEdited.dependenciesID[i]);
+                    string path = AssetDatabase.GUIDToAssetPath(task.package.dependenciesID[i]);
                     task.oldPathSaved[i] = path;
-                    string destPath = m_CurrentlyEdited.outputPath[i].Replace("Assets", task.movePath);
+                    string destPath = task.package.outputPath[i].Replace("Assets", task.movePath);
                     task.newPathSaved[i] = destPath;
 
                     AssetDatabase.MoveAsset(path, destPath);
@@ -137,6 +140,8 @@ public class PackageDesigner : EditorWindow
                 m_ToExport.Dequeue();
             }
         }
+        else if(m_CloseOnFinishExport)
+            EditorApplication.Exit(0);
     }
 
     void UndoPerformed()
@@ -218,11 +223,15 @@ public class PackageDesigner : EditorWindow
         m_ToExport.Enqueue(task);
     }
 
-    void ExportAll()
+    void ExportAll(string saveFolder = "")
     {
-        string saveFolder = EditorUtility.SaveFolderPanel("Choose output Folder", Application.dataPath.Replace("/Assets", ""), "Package Ouput");
+        if (saveFolder == "")
+            saveFolder = EditorUtility.SaveFolderPanel("Choose output Folder", Application.dataPath.Replace("/Assets", ""), "Package Ouput");
+
         if (saveFolder == "")
             return;
+
+        Debug.LogFormat("Export all package : {0} package to export", m_AssetPackageList.Length);
 
         AssetPackage current = m_CurrentlyEdited;
         for(int i = 0; i < m_AssetPackageList.Length; ++i)
@@ -232,6 +241,23 @@ public class PackageDesigner : EditorWindow
         }
         m_CurrentlyEdited = current;
 
+    }
+
+    static void CommandLineExportAllPackage()
+    {
+        PackageDesigner designer = GetWindow<PackageDesigner>();
+
+        string[] commandLineArgument = System.Environment.GetCommandLineArgs();
+        int index = System.Array.IndexOf(commandLineArgument, "PackageDesigner.CommandLineExportAllPackage");
+
+        if (index < 0 || index + 1 >= commandLineArgument.Length || !System.IO.Directory.Exists(commandLineArgument[index+1]))
+        {
+            Debug.LogError("Specify a path to export the packages to! (place the path after -executeMethod PackageDesigner.CommandLineExportAllPackage \"your path here\")");
+            EditorApplication.Exit(12);
+        }
+
+        designer.ExportAll(commandLineArgument[index + 1]);
+        designer.m_CloseOnFinishExport = true;
     }
 
     void EditedUI()
