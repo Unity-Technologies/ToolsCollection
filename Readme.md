@@ -4,6 +4,10 @@ Tool Collection
 This repository is used to gather together all the little editor script & tools
 that we write for different projects.
 
+**Note : all those tools are WIP and experimental and sometime not the most stable.
+Use at your own risk. Be sure that your project is on source control so if some
+delete files you can recovers them!**
+
 Each live in its own folder under the Assets folder.
 
 Through the **Package Designer** tool (see wiki for documentation) each tool can
