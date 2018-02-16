@@ -30,6 +30,9 @@ public class AssetImporterOptionsEditor : Editor
     protected TextureImporter defaultTextureImport;
     protected ModelImporter defaultMeshImporter;
 
+    protected GenericMenu importerMenu = new GenericMenu();
+
+
     private void OnEnable()
     {
         _opts = target as AssetImporterOptions;
@@ -48,11 +51,9 @@ public class AssetImporterOptionsEditor : Editor
 
         defaultMeshImporter = AssetImporter.GetAtPath(meshasset) as ModelImporter;
         defaultTextureImport = AssetImporter.GetAtPath(textureasset) as TextureImporter;
-    }
 
-    private void OnDisable()
-    {
-
+        importerMenu.AddItem(new GUIContent("Texture"), false, AddNewTypeofPreset, defaultTextureImport);
+        importerMenu.AddItem(new GUIContent("Mesh"), false, AddNewTypeofPreset, defaultMeshImporter);
     }
 
     protected void AddNewPreset(Preset p)
@@ -80,48 +81,58 @@ public class AssetImporterOptionsEditor : Editor
     {
         Object unityObj = obj as Object;
         Preset newPreset = new Preset(unityObj);
-
-        
-        //if (unityObj == defaultTextureImport)
-        //{
-        //    int count = 0;
-        //    while (count < newPreset.PropertyModifications.Length)
-        //    {
-        //        defaultTextureImport.
-        //        if (newPreset.PropertyModifications[count].propertyPath.Contains("sourceTextureInformation"))
-        //        {
-        //            ArrayUtility.RemoveAt(ref newPreset.PropertyModifications, count);
-        //        }
-        //    }
-        //}
-
+    
         AddNewPreset(newPreset);
         EditorUtility.SetDirty(_opts);
     }
 
+    public void RemovePreset(int index)
+    {
+        var opt = _opts.importOptions[index];
+
+        ArrayUtility.RemoveAt(ref _opts.importOptions, index);
+        ArrayUtility.RemoveAt(ref m_InspectorsFade, index);
+
+        string assetpath = AssetDatabase.GetAssetPath(opt.preset);
+        DestroyImmediate(opt.preset, true);
+        AssetDatabase.ImportAsset(assetpath);
+        AssetDatabase.Refresh();
+    }
+
     public override void OnInspectorGUI()
     {
-        //TODO : move the generic menu out of that to build it only once
-        if (EditorGUILayout.DropdownButton(new GUIContent("New Preset"), FocusType.Passive))
+        if (EditorGUILayout.DropdownButton(new GUIContent("New Preset"), FocusType.Passive, GUILayout.Width(100)))
         {
-            GenericMenu menu = new GenericMenu();
-
-            menu.AddItem(new GUIContent("Texture"), false, AddNewTypeofPreset, defaultTextureImport);
-            menu.AddItem(new GUIContent("Mesh"), false, AddNewTypeofPreset, defaultMeshImporter);
-
-            menu.DropDown(GUILayoutUtility.GetLastRect());
+            importerMenu.ShowAsContext();
         }
 
         if (_opts.importOptions != null)
         {
             Editor ed = null;
+            bool deletionHappened = false;
             for (int i = 0; i < _opts.importOptions.Length; ++i)
             {
+                deletionHappened = false;
+
+                EditorGUILayout.BeginHorizontal();
                 m_InspectorsFade[i] = EditorGUILayout.Foldout(m_InspectorsFade[i], "Preset : " + _opts.importOptions[i].preset.GetTargetTypeName() + " on " + _opts.importOptions[i].nameFilter);
+
+                if (GUILayout.Button("Delete", GUILayout.Width(100)))
+                {
+                    if (EditorUtility.DisplayDialog("Confirm", "Are you sure you want to delete that preset rule?",
+                        "Delete", "Cancel"))
+                    {
+                        RemovePreset(i);
+                        i--;
+                        deletionHappened = true;
+                    }
+                }
+
+                EditorGUILayout.EndHorizontal();
 
                 EditorGUI.BeginChangeCheck();
 
-                if (m_InspectorsFade[i])
+                if (!deletionHappened && m_InspectorsFade[i])
                 {
                     _opts.importOptions[i].nameFilter =
                         EditorGUILayout.TextField("Filter", _opts.importOptions[i].nameFilter);
