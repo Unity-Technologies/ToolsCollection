@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2bcdc6922393b0442846eb98977c87ae, type: 3}
+  m_Name: PresetImporter
+  m_EditorClassIdentifier: 
+  packageName: PresetImporter
+  dependenciesID:
+  - 8ac367d64e24f4f40b3cf83dc0891d14
+  - 62446868fa5cdb04491254f6b476f480
+  - c712e1dfe3a8d294f973ea3e49ecdbe5
+  - 39d2d07167d4c4e4fa5b80092e1a4d69
+  - 01046dd07f5e9764d9685d68f7eb6447
+  outputPath:
+  - Assets/PresetImporter
+  - Assets/PresetImporter/__importermeshdummy__.obj
+  - Assets/PresetImporter/__importertexturedummy__.png
+  - Assets/PresetImporter/Editor/AssetImporterOptions.cs
+  - Assets/PresetImporter/Editor/DefaultAssetProcessor.cs

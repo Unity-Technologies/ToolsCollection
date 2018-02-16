@@ -37,3 +37,13 @@ they are in the project before export (e.g you may want to group mesh, material
   of in 3 differents mesh/material/texture folder in the root of the package)
 
 See the Wiki for more documentation
+
+### Preset Importer
+
+The Preset Importer allow to define preset to apply on import to file that
+match a given filter.
+
+One example is to make a preset to import all file having `_Normal` in their
+filename as Normal.
+
+See Wiki for more info on how to use
