@@ -25,6 +25,31 @@ A tool to find all reference to a given function used in Unity Event inside the
 editor. Allow to check before removing a function that seemed used nowhere that
 it is not referenced by a Unity Event (and so would only fail during execution)
 
+### Missing Scripts Finder
+
+Allow to find objects with Missing Script references in both prefabs and scenes.
+
+Just open the window from the Content Extensions/Missing Script Finder menu entry
+and either click find in Assets or find in Current Scene
+
+### Package Manager Check
+
+Separate assembly that allow to check if a package is part of the project on first
+import and add it if it's missing. Used by the Content Team when distributing a 
+full project on the Asset Stores that requires packages (as the Asset Store Tool 
+don't include yet the Packages Manifest).
+
+Require to be placed in an editor folder with a file somewhere (ideally next to it)
+called `PackageImportList.txt` that containt a list of the package of the form :
+`com.unity.package@version`.
+
+e.g
+```com.unity.postprocessing@2.0.3-preview
+com.unity.cinemachine@2.1.12
+com.unity.probuilder@3.0.3
+com.unity.textmeshpro@1.2.2
+```
+
 ### Package Designer
 
 The Package Designer is a tool that allow to define package from assets, save
